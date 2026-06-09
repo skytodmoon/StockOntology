@@ -2,12 +2,51 @@
 本体验证器
 
 提供本体一致性检查、完整性验证和合规性验证功能。
+增强功能：
+- 公理约束校验（OWL Restriction）
+- 传导规则完整性检查
+- 语义对齐校验
 """
 
 from typing import Any, Dict, List, Optional
 from loguru import logger
 
 from .ontology_manager import OntologyManager, RDFLIB_AVAILABLE
+
+
+# OWL 公理约束定义（与 stock_ontology.owl 对齐）
+AXIOM_CONSTRAINTS = {
+    "Company": {
+        "required_properties": ["hasStockCode", "hasStockName"],
+        "required_relationships": ["belongsToIndustry"],
+        "description": "公司必须有股票代码、名称，且属于至少一个行业",
+    },
+    "MarketEvent": {
+        "required_properties": ["hasEventDate", "hasEventId"],
+        "required_relationships": [],
+        "description": "市场事件必须有事件日期和事件ID",
+    },
+    "FinancialReport": {
+        "required_properties": ["hasReportDate"],
+        "required_relationships": [],
+        "description": "财务报告必须有报告日期",
+    },
+    "AnalysisResult": {
+        "required_properties": ["hasConfidence", "hasTraceId"],
+        "required_relationships": [],
+        "description": "分析结果必须有置信度和溯源ID",
+    },
+    "CausalChain": {
+        "required_properties": ["hasConfidence"],
+        "required_relationships": [],
+        "description": "因果传导链必须有置信度",
+    },
+    "PredictionRecord": {
+        "required_properties": ["hasConfidence"],
+        "required_relationships": [],
+        "description": "预测记录必须有置信度",
+    },
+}
 
 
 class ValidationIssue:
@@ -129,6 +168,12 @@ class OntologyValidator:
         # 完整性验证
         self._validate_completeness(result)
 
+        # 公理约束验证
+        self._validate_axiom_constraints(result)
+
+        # 传导规则完整性验证
+        self._validate_transmission_rules(result)
+
         return result
 
     def _validate_structure(self, result: ValidationResult):
@@ -244,6 +289,162 @@ class OntologyValidator:
                 ))
 
         logger.info(f"Completeness validation completed: {len(result.issues)} issues found")
+
+    def _validate_axiom_constraints(self, result: ValidationResult):
+        """
+        验证 OWL 公理约束
+
+        检查本体中定义的类是否满足其公理约束（required_properties, required_relationships）。
+
+        Args:
+            result: 验证结果
+        """
+        if not self.ontology_manager._loaded:
+            return
+
+        classes = self.ontology_manager.get_classes()
+        class_names = {cls["name"] for cls in classes}
+        properties = self.ontology_manager.get_properties()
+        property_names = {prop["name"] for prop in properties}
+
+        for class_name, constraints in AXIOM_CONSTRAINTS.items():
+            if class_name not in class_names:
+                result.add_issue(ValidationIssue(
+                    issue_type="axiom",
+                    severity="warning",
+                    message=(
+                        f"Class '{class_name}' referenced in axiom constraints "
+                        f"but not defined in ontology"
+                    ),
+                    location=f"Class:{class_name}",
+                    suggestion=f"Add class '{class_name}' to ontology"
+                ))
+                continue
+
+            # 检查必需属性
+            for required_prop in constraints.get("required_properties", []):
+                if required_prop not in property_names:
+                    result.add_issue(ValidationIssue(
+                        issue_type="axiom",
+                        severity="warning",
+                        message=(
+                            f"Class '{class_name}' requires property '{required_prop}' "
+                            f"but it is not defined in ontology"
+                        ),
+                        location=f"Class:{class_name}",
+                        suggestion=f"Add property '{required_prop}' to ontology"
+                    ))
+
+        logger.info(f"Axiom constraint validation completed: {len(result.issues)} issues found")
+
+    def _validate_transmission_rules(self, result: ValidationResult):
+        """
+        验证传导规则完整性
+
+        检查本体是否定义了支撑传导规则所需的关系类型。
+
+        Args:
+            result: 验证结果
+        """
+        if not self.ontology_manager._loaded:
+            return
+
+        # 传导规则所需的关系类型
+        required_relationships = {
+            "impacts": "政策传导、直接影响",
+            "belongsToIndustry": "政策传导（行业→公司）",
+            "subIndustryOf": "行业层级传导",
+            "supplyTo": "产业链传导",
+            "competesWith": "竞争传导",
+            "transmitsTo": "传导链记录",
+            "evidencedBy": "分析结果溯源",
+            "hasReasoningStep": "因果链记录",
+        }
+
+        properties = self.ontology_manager.get_properties()
+        property_names = {prop["name"] for prop in properties}
+
+        for rel_name, usage in required_relationships.items():
+            if rel_name not in property_names:
+                result.add_issue(ValidationIssue(
+                    issue_type="transmission_rule",
+                    severity="warning",
+                    message=(
+                        f"Relationship '{rel_name}' required by transmission rules "
+                        f"({usage}) but not defined in ontology"
+                    ),
+                    location=f"Property:{rel_name}",
+                    suggestion=f"Add relationship '{rel_name}' to ontology"
+                ))
+
+        logger.info(
+            f"Transmission rule validation completed: {len(result.issues)} issues found"
+        )
+
+    def validate_graph_instance(
+        self,
+        entity_type: str,
+        entity_data: Dict[str, Any],
+    ) -> ValidationResult:
+        """
+        验证图谱实例是否满足本体公理约束
+
+        Args:
+            entity_type: 实体类型（Company, MarketEvent 等）
+            entity_data: 实体数据
+
+        Returns:
+            验证结果
+        """
+        result = ValidationResult()
+
+        constraints = AXIOM_CONSTRAINTS.get(entity_type)
+        if not constraints:
+            return result
+
+        # 检查必需属性
+        for required_prop in constraints.get("required_properties", []):
+            # 属性名转换：hasStockCode → stockCode（去掉 has 前缀）
+            data_key = required_prop
+            if data_key.startswith("has"):
+                data_key = data_key[3:]  # 去掉 "has"
+                data_key = data_key[0].lower() + data_key[1:]  # 首字母小写
+
+            if not entity_data.get(data_key) and not entity_data.get(required_prop):
+                result.add_issue(ValidationIssue(
+                    issue_type="axiom",
+                    severity="error",
+                    message=(
+                        f"{entity_type} instance missing required property "
+                        f"'{required_prop}'"
+                    ),
+                    location=f"{entity_type}:{entity_data.get('stockCode', entity_data.get('eventId', 'unknown'))}",
+                    suggestion=f"Add property '{required_prop}' to the instance"
+                ))
+
+        # 检查必需关系
+        for required_rel in constraints.get("required_relationships", []):
+            # 检查数据中是否有对应的关系标记
+            rel_key = required_rel
+            if rel_key.startswith("belongsTo"):
+                rel_key = "industry"
+            elif rel_key.startswith("has"):
+                rel_key = rel_key[3:]
+                rel_key = rel_key[0].lower() + rel_key[1:]
+
+            if not entity_data.get(rel_key):
+                result.add_issue(ValidationIssue(
+                    issue_type="axiom",
+                    severity="warning",
+                    message=(
+                        f"{entity_type} instance may be missing required relationship "
+                        f"'{required_rel}'"
+                    ),
+                    location=f"{entity_type}:{entity_data.get('stockCode', entity_data.get('eventId', 'unknown'))}",
+                    suggestion=f"Ensure instance has '{required_rel}' relationship"
+                ))
+
+        return result
 
     def generate_report(self) -> str:
         """
