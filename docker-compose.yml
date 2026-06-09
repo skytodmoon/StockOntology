@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - stock-network
+
+  # 后端服务
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=stock_ontology_2024
+      - REDIS_HOST=redis
+      - POSTGRES_HOST=timescaledb
+      - POSTGRES_PASSWORD=stock_ontology_2024
+    depends_on:
+      - neo4j
+      - redis
+      - timescaledb
+    networks:
+      - stock-network
+    volumes:
+      - ./ontology:/app/ontology
+      - ./logs:/app/logs
+
+  # Neo4j 图数据库
+  neo4j:
+    image: neo4j:5.0
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/stock_ontology_2024
+      - NEO4J_PLUGINS=["apoc"]
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    networks:
+      - stock-network
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - stock-network
+
+  # TimescaleDB 时序数据库
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=stock_ontology_2024
+      - POSTGRES_DB=stock_ontology
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+    networks:
+      - stock-network
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  redis_data:
+  timescale_data:
+
+networks:
+  stock-network:
+    driver: bridge

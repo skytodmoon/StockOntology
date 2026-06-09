@@ -1,0 +1,84 @@
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+httpx==0.26.0
+
+# Database - Neo4j
+neo4j==5.17.0
+neomodel==5.2.1
+
+# Database - TimescaleDB/PostgreSQL
+sqlalchemy==2.0.25
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
+# Database - Redis
+redis[hiredis]==5.0.1
+
+# Database - Vector Store
+chromadb==0.4.22
+pymilvus==2.3.6
+
+# LLM & AI
+langchain==0.1.4
+langchain-openai==0.0.5
+langchain-community==0.0.16
+openai==1.10.0
+transformers==4.37.0
+torch==2.1.2
+sentence-transformers==2.3.1
+
+# Data Processing
+pandas==2.1.4
+numpy==1.26.3
+scikit-learn==1.3.2
+scipy==1.12.0
+
+# Ontology
+owlready2==0.45
+rdflib==7.0.0
+pyshacl==0.25.0
+
+# Data Collection
+tushare==1.4.2
+akshare==1.12.50
+beautifulsoup4==4.12.3
+lxml==5.1.0
+aiohttp==3.9.3
+
+# NLP
+jieba==0.42.1
+snownlp==0.12.3
+
+# Task Queue
+celery==5.3.6
+kombu==5.3.5
+
+# Utilities
+pydantic==2.5.3
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+loguru==0.7.2
+tenacity==8.2.3
+orjson==3.9.10
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+httpx==0.26.0
+
+# Development
+black==24.1.1
+isort==5.13.2
+flake8==7.0.0
+mypy==1.8.0
+pre-commit==3.6.0
+
+# Visualization
+plotly==5.18.0
+kaleido==0.2.1

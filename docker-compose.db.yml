@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # Redis 缓存
+  redis:
+    image: redis:6-alpine
+    container_name: stock-ontology-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - stock-network
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: stock-ontology-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=stock_ontology_2024
+      - POSTGRES_DB=stock_ontology
+      - POSTGRES_INITDB_ARGS=--encoding=UTF8
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - stock-network
+    restart: unless-stopped
+
+  # TimescaleDB 时序数据库
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: stock-ontology-timescaledb
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=stock_ontology_2024
+      - POSTGRES_DB=stock_ontology_ts
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+    networks:
+      - stock-network
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+    driver: local
+  postgres_data:
+    driver: local
+  timescale_data:
+    driver: local
+
+networks:
+  stock-network:
+    driver: bridge

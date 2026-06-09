@@ -1,0 +1,149 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:stock="http://stock-ontology.org/">
+
+    <owl:Ontology rdf:about="http://stock-ontology.org/financial">
+        <rdfs:comment>财务本体模块</rdfs:comment>
+        <owl:versionInfo>1.0.0</owl:versionInfo>
+    </owl:Ontology>
+
+    <!-- 财务报告类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/FinancialReport">
+        <rdfs:label>财务报告</rdfs:label>
+        <rdfs:comment>公司的财务报告</rdfs:comment>
+    </owl:Class>
+
+    <!-- 财务报告子类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/QuarterlyReport">
+        <rdfs:label>季度报告</rdfs:label>
+        <rdfs:comment>季度财务报告</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/FinancialReport"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/AnnualReport">
+        <rdfs:label>年度报告</rdfs:label>
+        <rdfs:comment>年度财务报告</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/FinancialReport"/>
+    </owl:Class>
+
+    <!-- 财务指标类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/FinancialIndicator">
+        <rdfs:label>财务指标</rdfs:label>
+        <rdfs:comment>衡量公司财务状况的指标</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/ProfitabilityIndicator">
+        <rdfs:label>盈利能力指标</rdfs:label>
+        <rdfs:comment>衡量公司盈利能力的指标</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/FinancialIndicator"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/GrowthIndicator">
+        <rdfs:label>成长性指标</rdfs:label>
+        <rdfs:comment>衡量公司成长性的指标</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/FinancialIndicator"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/SolvencyIndicator">
+        <rdfs:label>偿债能力指标</rdfs:label>
+        <rdfs:comment>衡量公司偿债能力的指标</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/FinancialIndicator"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/ValuationIndicator">
+        <rdfs:label>估值指标</rdfs:label>
+        <rdfs:comment>衡量公司估值水平的指标</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/FinancialIndicator"/>
+    </owl:Class>
+
+    <!-- 财务报告数据属性 -->
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasReportDate">
+        <rdfs:label>报告日期</rdfs:label>
+        <rdfs:comment>财务报告的截止日期</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/FinancialReport"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasReportType">
+        <rdfs:label>报告类型</rdfs:label>
+        <rdfs:comment>财务报告的类型（Q1/Q2/Q3/Annual）</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/FinancialReport"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasRevenue">
+        <rdfs:label>营业收入</rdfs:label>
+        <rdfs:comment>公司的营业收入（元）</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/FinancialReport"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasNetProfit">
+        <rdfs:label>净利润</rdfs:label>
+        <rdfs:comment>公司的净利润（元）</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/FinancialReport"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasTotalAssets">
+        <rdfs:label>总资产</rdfs:label>
+        <rdfs:comment>公司的总资产（元）</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/FinancialReport"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasTotalEquity">
+        <rdfs:label>股东权益</rdfs:label>
+        <rdfs:comment>公司的股东权益（元）</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/FinancialReport"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasROE">
+        <rdfs:label>净资产收益率</rdfs:label>
+        <rdfs:comment>公司的净资产收益率</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/FinancialReport"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasEPS">
+        <rdfs:label>每股收益</rdfs:label>
+        <rdfs:comment>公司的每股收益（元）</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/FinancialReport"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasPE">
+        <rdfs:label>市盈率</rdfs:label>
+        <rdfs:comment>公司的市盈率</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/FinancialReport"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasPB">
+        <rdfs:label>市净率</rdfs:label>
+        <rdfs:comment>公司的市净率</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/FinancialReport"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    </owl:DatatypeProperty>
+
+    <!-- 财务报告对象属性 -->
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/hasFinancialReport">
+        <rdfs:label>财务报告</rdfs:label>
+        <rdfs:comment>公司的财务报告</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/FinancialReport"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/reportOf">
+        <rdfs:label>所属公司</rdfs:label>
+        <rdfs:comment>财务报告所属的公司</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/FinancialReport"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Company"/>
+        <owl:inverseOf rdf:resource="http://stock-ontology.org/hasFinancialReport"/>
+    </owl:ObjectProperty>
+
+</rdf:RDF>

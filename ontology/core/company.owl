@@ -1,0 +1,164 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:stock="http://stock-ontology.org/">
+
+    <owl:Ontology rdf:about="http://stock-ontology.org/company">
+        <rdfs:comment>公司本体模块</rdfs:comment>
+        <owl:versionInfo>1.0.0</owl:versionInfo>
+    </owl:Ontology>
+
+    <!-- 公司类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/Company">
+        <rdfs:label>公司</rdfs:label>
+        <rdfs:comment>上市公司实体，代表在证券交易所上市的企业</rdfs:comment>
+    </owl:Class>
+
+    <!-- 公司子类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/ListedCompany">
+        <rdfs:label>上市公司</rdfs:label>
+        <rdfs:comment>在证券交易所上市的公司</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/Company"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/StateOwnedEnterprise">
+        <rdfs:label>国有企业</rdfs:label>
+        <rdfs:comment>国有资本控股的企业</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/Company"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/PrivateEnterprise">
+        <rdfs:label>民营企业</rdfs:label>
+        <rdfs:comment>民营资本控股的企业</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/Company"/>
+    </owl:Class>
+
+    <!-- 公司数据属性 -->
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasStockCode">
+        <rdfs:label>股票代码</rdfs:label>
+        <rdfs:comment>证券交易所分配的唯一代码</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasStockName">
+        <rdfs:label>股票名称</rdfs:label>
+        <rdfs:comment>公司在证券交易所的名称</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasMarket">
+        <rdfs:label>上市市场</rdfs:label>
+        <rdfs:comment>公司上市的证券交易所</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasListDate">
+        <rdfs:label>上市日期</rdfs:label>
+        <rdfs:comment>公司首次公开发行股票的日期</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasMarketCap">
+        <rdfs:label>市值</rdfs:label>
+        <rdfs:comment>公司股票的总市值（元）</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasTotalShare">
+        <rdfs:label>总股本</rdfs:label>
+        <rdfs:comment>公司发行的全部股份数量</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasFloatShare">
+        <rdfs:label>流通股本</rdfs:label>
+        <rdfs:comment>可以在市场上自由交易的股份数量</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasDescription">
+        <rdfs:label>公司简介</rdfs:label>
+        <rdfs:comment>公司的基本业务描述</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasWebsite">
+        <rdfs:label>公司网站</rdfs:label>
+        <rdfs:comment>公司的官方网站地址</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#anyURI"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasAddress">
+        <rdfs:label>公司地址</rdfs:label>
+        <rdfs:comment>公司的注册地址</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <!-- 公司对象属性 -->
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/belongsToIndustry">
+        <rdfs:label>所属行业</rdfs:label>
+        <rdfs:comment>公司所属的行业分类</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Industry"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/competesWith">
+        <rdfs:label>竞争关系</rdfs:label>
+        <rdfs:comment>公司之间的竞争关系</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Company"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/supplyTo">
+        <rdfs:label>供应关系</rdfs:label>
+        <rdfs:comment>公司之间的供应链关系</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Company"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/partnerWith">
+        <rdfs:label>合作关系</rdfs:label>
+        <rdfs:comment>公司之间的合作关系</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Company"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/hasSubsidiary">
+        <rdfs:label>子公司</rdfs:label>
+        <rdfs:comment>公司的子公司关系</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Company"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/parentCompany">
+        <rdfs:label>母公司</rdfs:label>
+        <rdfs:comment>公司的母公司关系</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Company"/>
+        <owl:inverseOf rdf:resource="http://stock-ontology.org/hasSubsidiary"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/correlatedWith">
+        <rdfs:label>股价相关</rdfs:label>
+        <rdfs:comment>公司股价之间的相关性</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Company"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+    </owl:ObjectProperty>
+
+</rdf:RDF>

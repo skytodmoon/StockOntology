@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:stock="http://stock-ontology.org/">
+
+    <owl:Ontology rdf:about="http://stock-ontology.org/industry">
+        <rdfs:comment>行业本体模块</rdfs:comment>
+        <owl:versionInfo>1.0.0</owl:versionInfo>
+    </owl:Ontology>
+
+    <!-- 行业类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/Industry">
+        <rdfs:label>行业</rdfs:label>
+        <rdfs:comment>行业分类，用于对上市公司进行分类</rdfs:comment>
+    </owl:Class>
+
+    <!-- 行业子类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/Sector">
+        <rdfs:label>板块</rdfs:label>
+        <rdfs:comment>一级行业分类</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/Industry"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/IndustryGroup">
+        <rdfs:label>行业组</rdfs:label>
+        <rdfs:comment>二级行业分类</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/Industry"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/IndustrySubGroup">
+        <rdfs:label>行业子组</rdfs:label>
+        <rdfs:comment>三级行业分类</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/Industry"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/IndustryClass">
+        <rdfs:label>行业分类</rdfs:label>
+        <rdfs:comment>四级行业分类</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/Industry"/>
+    </owl:Class>
+
+    <!-- 行业数据属性 -->
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasIndustryCode">
+        <rdfs:label>行业代码</rdfs:label>
+        <rdfs:comment>行业分类的唯一代码</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasIndustryName">
+        <rdfs:label>行业名称</rdfs:label>
+        <rdfs:comment>行业的名称</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasIndustryLevel">
+        <rdfs:label>行业级别</rdfs:label>
+        <rdfs:comment>行业分类的层级（1-4）</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasIndustryDescription">
+        <rdfs:label>行业描述</rdfs:label>
+        <rdfs:comment>行业的详细描述</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <!-- 行业对象属性 -->
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/subIndustryOf">
+        <rdfs:label>上级行业</rdfs:label>
+        <rdfs:comment>行业的上级分类</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/hasSubIndustry">
+        <rdfs:label>子行业</rdfs:label>
+        <rdfs:comment>行业的下级分类</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Industry"/>
+        <owl:inverseOf rdf:resource="http://stock-ontology.org/subIndustryOf"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/industrySupplyTo">
+        <rdfs:label>行业供应</rdfs:label>
+        <rdfs:comment>行业之间的供应链关系</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Industry"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/industryCompetesWith">
+        <rdfs:label>行业竞争</rdfs:label>
+        <rdfs:comment>行业之间的竞争关系</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+    </owl:ObjectProperty>
+
+</rdf:RDF>

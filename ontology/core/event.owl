@@ -1,0 +1,184 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:stock="http://stock-ontology.org/">
+
+    <owl:Ontology rdf:about="http://stock-ontology.org/event">
+        <rdfs:comment>事件本体模块</rdfs:comment>
+        <owl:versionInfo>1.0.0</owl:versionInfo>
+    </owl:Ontology>
+
+    <!-- 市场事件类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/MarketEvent">
+        <rdfs:label>市场事件</rdfs:label>
+        <rdfs:comment>影响股票市场的事件</rdfs:comment>
+    </owl:Class>
+
+    <!-- 事件子类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/PolicyEvent">
+        <rdfs:label>政策事件</rdfs:label>
+        <rdfs:comment>政府政策变化相关的事件</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/MarketEvent"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/MonetaryPolicyEvent">
+        <rdfs:label>货币政策事件</rdfs:label>
+        <rdfs:comment>央行货币政策变化</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/PolicyEvent"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/FiscalPolicyEvent">
+        <rdfs:label>财政政策事件</rdfs:label>
+        <rdfs:comment>政府财政政策变化</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/PolicyEvent"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/IndustryPolicyEvent">
+        <rdfs:label>产业政策事件</rdfs:label>
+        <rdfs:comment>产业政策变化</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/PolicyEvent"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/CompanyEvent">
+        <rdfs:label>公司事件</rdfs:label>
+        <rdfs:comment>公司层面的事件</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/MarketEvent"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/EarningsEvent">
+        <rdfs:label>财报事件</rdfs:label>
+        <rdfs:comment>公司发布财报</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/CompanyEvent"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/MergerEvent">
+        <rdfs:label>并购事件</rdfs:label>
+        <rdfs:comment>公司并购重组</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/CompanyEvent"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/DividendEvent">
+        <rdfs:label>分红事件</rdfs:label>
+        <rdfs:comment>公司分红派息</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/CompanyEvent"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/MacroEvent">
+        <rdfs:label>宏观事件</rdfs:label>
+        <rdfs:comment>宏观经济层面的事件</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/MarketEvent"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/EconomicDataEvent">
+        <rdfs:label>经济数据事件</rdfs:label>
+        <rdfs:comment>重要经济数据发布</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/MacroEvent"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/GeopoliticalEvent">
+        <rdfs:label>地缘政治事件</rdfs:label>
+        <rdfs:comment>地缘政治变化</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/MacroEvent"/>
+    </owl:Class>
+
+    <!-- 事件数据属性 -->
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasEventId">
+        <rdfs:label>事件ID</rdfs:label>
+        <rdfs:comment>事件的唯一标识符</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasEventTitle">
+        <rdfs:label>事件标题</rdfs:label>
+        <rdfs:comment>事件的标题</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasEventDate">
+        <rdfs:label>事件日期</rdfs:label>
+        <rdfs:comment>事件发生的日期</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasEventType">
+        <rdfs:label>事件类型</rdfs:label>
+        <rdfs:comment>事件的分类类型</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasImpactLevel">
+        <rdfs:label>影响级别</rdfs:label>
+        <rdfs:comment>事件对市场的影响程度</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasEventContent">
+        <rdfs:label>事件内容</rdfs:label>
+        <rdfs:comment>事件的详细描述</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasEventSource">
+        <rdfs:label>事件来源</rdfs:label>
+        <rdfs:comment>事件信息的来源</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <!-- 事件对象属性 -->
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/impacts">
+        <rdfs:label>影响</rdfs:label>
+        <rdfs:comment>事件对实体的影响</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/FinancialEntity"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/impactsCompany">
+        <rdfs:label>影响公司</rdfs:label>
+        <rdfs:comment>事件对公司的影响</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:subPropertyOf rdf:resource="http://stock-ontology.org/impacts"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/impactsIndustry">
+        <rdfs:label>影响行业</rdfs:label>
+        <rdfs:comment>事件对行业的影响</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdfs:subPropertyOf rdf:resource="http://stock-ontology.org/impacts"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/causedBy">
+        <rdfs:label>由...引起</rdfs:label>
+        <rdfs:comment>事件的因果关系</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/MarketEvent"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/causes">
+        <rdfs:label>导致</rdfs:label>
+        <rdfs:comment>事件导致的其他事件</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <owl:inverseOf rdf:resource="http://stock-ontology.org/causedBy"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/relatedTo">
+        <rdfs:label>相关事件</rdfs:label>
+        <rdfs:comment>事件之间的关联关系</rdfs:comment>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+    </owl:ObjectProperty>
+
+</rdf:RDF>

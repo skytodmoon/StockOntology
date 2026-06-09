@@ -1,0 +1,256 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:stock="http://stock-ontology.org/">
+
+    <owl:Ontology rdf:about="http://stock-ontology.org/">
+        <rdfs:comment>股票市场本体 - Stock Market Ontology</rdfs:comment>
+        <owl:versionInfo>1.0.0</owl:versionInfo>
+    </owl:Ontology>
+
+    <!-- ==================== Classes ==================== -->
+
+    <!-- 基础类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/FinancialEntity">
+        <rdfs:label>金融实体</rdfs:label>
+        <rdfs:comment>所有金融实体的基类</rdfs:comment>
+    </owl:Class>
+
+    <!-- 公司类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/Company">
+        <rdfs:label>公司</rdfs:label>
+        <rdfs:comment>上市公司实体</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/FinancialEntity"/>
+    </owl:Class>
+
+    <!-- 行业类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/Industry">
+        <rdfs:label>行业</rdfs:label>
+        <rdfs:comment>行业分类</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/FinancialEntity"/>
+    </owl:Class>
+
+    <!-- 财务报告类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/FinancialReport">
+        <rdfs:label>财务报告</rdfs:label>
+        <rdfs:comment>公司财务报告</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/FinancialEntity"/>
+    </owl:Class>
+
+    <!-- 市场事件类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/MarketEvent">
+        <rdfs:label>市场事件</rdfs:label>
+        <rdfs:comment>市场相关事件</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/FinancialEntity"/>
+    </owl:Class>
+
+    <!-- 投资者类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/Investor">
+        <rdfs:label>投资者</rdfs:label>
+        <rdfs:comment>投资者实体</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/FinancialEntity"/>
+    </owl:Class>
+
+    <!-- 事件子类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/PolicyEvent">
+        <rdfs:label>政策事件</rdfs:label>
+        <rdfs:comment>政策相关事件</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/MarketEvent"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/CompanyEvent">
+        <rdfs:label>公司事件</rdfs:label>
+        <rdfs:comment>公司相关事件</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/MarketEvent"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/MacroEvent">
+        <rdfs:label>宏观事件</rdfs:label>
+        <rdfs:comment>宏观经济事件</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/MarketEvent"/>
+    </owl:Class>
+
+    <!-- 投资者子类 -->
+    <owl:Class rdf:about="http://stock-ontology.org/InstitutionalInvestor">
+        <rdfs:label>机构投资者</rdfs:label>
+        <rdfs:comment>机构投资者</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/Investor"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://stock-ontology.org/RetailInvestor">
+        <rdfs:label>散户投资者</rdfs:label>
+        <rdfs:comment>个人投资者</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="http://stock-ontology.org/Investor"/>
+    </owl:Class>
+
+    <!-- ==================== Data Properties ==================== -->
+
+    <!-- 公司属性 -->
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasStockCode">
+        <rdfs:label>股票代码</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasStockName">
+        <rdfs:label>股票名称</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasMarketCap">
+        <rdfs:label>市值</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasListDate">
+        <rdfs:label>上市日期</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
+    </owl:DatatypeProperty>
+
+    <!-- 行业属性 -->
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasIndustryCode">
+        <rdfs:label>行业代码</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasIndustryName">
+        <rdfs:label>行业名称</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasIndustryLevel">
+        <rdfs:label>行业级别</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+    </owl:DatatypeProperty>
+
+    <!-- 财务报告属性 -->
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasReportDate">
+        <rdfs:label>报告日期</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/FinancialReport"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasRevenue">
+        <rdfs:label>营业收入</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/FinancialReport"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasNetProfit">
+        <rdfs:label>净利润</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/FinancialReport"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasROE">
+        <rdfs:label>净资产收益率</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/FinancialReport"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+    </owl:DatatypeProperty>
+
+    <!-- 事件属性 -->
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasEventId">
+        <rdfs:label>事件ID</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasEventDate">
+        <rdfs:label>事件日期</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasImpactLevel">
+        <rdfs:label>影响级别</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <!-- 投资者属性 -->
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasInvestorId">
+        <rdfs:label>投资者ID</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Investor"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasInvestorName">
+        <rdfs:label>投资者名称</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Investor"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="http://stock-ontology.org/hasInvestorType">
+        <rdfs:label>投资者类型</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Investor"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+
+    <!-- ==================== Object Properties ==================== -->
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/belongsToIndustry">
+        <rdfs:label>所属行业</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Industry"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/subIndustryOf">
+        <rdfs:label>上级行业</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Industry"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/competesWith">
+        <rdfs:label>竞争关系</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Company"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/supplyTo">
+        <rdfs:label>供应关系</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Company"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/impacts">
+        <rdfs:label>影响</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/FinancialEntity"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/holds">
+        <rdfs:label>持有</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Investor"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Company"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/hasFinancialReport">
+        <rdfs:label>财务报告</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/FinancialReport"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/correlatedWith">
+        <rdfs:label>相关性</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/Company"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/Company"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="http://stock-ontology.org/causedBy">
+        <rdfs:label>由...引起</rdfs:label>
+        <rdfs:domain rdf:resource="http://stock-ontology.org/MarketEvent"/>
+        <rdfs:range rdf:resource="http://stock-ontology.org/MarketEvent"/>
+    </owl:ObjectProperty>
+
+</rdf:RDF>
