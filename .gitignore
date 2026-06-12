@@ -75,7 +75,8 @@ frontend/node_modules/
 
 # Docker
 .docker/
-docker/*/data/
+docker/**/data/
+docker/**/transactions/
 !docker/postgres/dockerfile
 !docker/redis/dockerfile
 !docker/timescale/dockerfile
