@@ -94,7 +94,7 @@ class NewsCollector(BaseCollector):
                     df = ak.stock_news_em(symbol=stock_code)
                     if df is not None and not df.empty:
                         for _, row in df.head(limit).iterrows():
-                            news_list.append({
+                            item = {
                                 "title": str(row.get('新闻标题', '')),
                                 "content": str(row.get('新闻内容', '')),
                                 "source": "eastmoney",
@@ -102,7 +102,9 @@ class NewsCollector(BaseCollector):
                                 "publishTime": str(row.get('发布时间', '')),
                                 "stockCode": stock_code,
                                 "keywords": keyword or "",
-                            })
+                            }
+                            if self.validate_data(item):
+                                news_list.append(item)
                 except Exception as e:
                     logger.warning(f"Failed to get stock news: {e}")
 
@@ -112,14 +114,16 @@ class NewsCollector(BaseCollector):
                     df = ak.stock_news_em(symbol="财经")
                     if df is not None and not df.empty:
                         for _, row in df.head(limit).iterrows():
-                            news_list.append({
+                            item = {
                                 "title": str(row.get('新闻标题', '')),
                                 "content": str(row.get('新闻内容', '')),
                                 "source": "eastmoney",
                                 "url": str(row.get('新闻链接', '')),
                                 "publishTime": str(row.get('发布时间', '')),
                                 "keywords": keyword or "",
-                            })
+                            }
+                            if self.validate_data(item):
+                                news_list.append(item)
                 except Exception as e:
                     logger.warning(f"Failed to get financial news: {e}")
 

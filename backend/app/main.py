@@ -14,7 +14,7 @@ import sys
 import time
 
 from app.config import settings
-from app.core.database import get_neo4j_client, get_redis_client
+from app.core.database import get_neo4j_client, get_redis_client, get_chroma_client
 
 
 # 配置日志
@@ -51,6 +51,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to connect to Redis: {e}")
 
+    try:
+        chroma = get_chroma_client()
+        chroma_stats = chroma.get_stats()
+        logger.info(f"ChromaDB initialized: {chroma_stats['collection_count']} collections")
+    except Exception as e:
+        logger.error(f"Failed to initialize ChromaDB: {e}")
+
     yield
 
     # 关闭时执行
@@ -69,6 +76,13 @@ async def lifespan(app: FastAPI):
         logger.info("Redis connection closed")
     except Exception as e:
         logger.error(f"Error closing Redis: {e}")
+
+    try:
+        chroma = get_chroma_client()
+        chroma.close()
+        logger.info("ChromaDB connection closed")
+    except Exception as e:
+        logger.error(f"Error closing ChromaDB: {e}")
 
 
 def create_app() -> FastAPI:
@@ -194,10 +208,24 @@ def register_routes(app: FastAPI):
                 "error": str(e),
             }
 
+        # ChromaDB 状态
+        try:
+            chroma = get_chroma_client()
+            chroma_stats = chroma.get_stats()
+            status["chromadb"] = {
+                "status": "connected",
+                "stats": chroma_stats,
+            }
+        except Exception as e:
+            status["chromadb"] = {
+                "status": "error",
+                "error": str(e),
+            }
+
         return status
 
     # 注册 API 路由模块
-    from app.api import ontology, graph, companies, industries, events, investors, financial, collectors, llm, prediction
+    from app.api import ontology, graph, companies, industries, events, investors, financial, collectors, llm, prediction, reasoning, dragon, scheduler
 
     app.include_router(ontology.router, prefix="/api/v1/ontology", tags=["Ontology"])
     app.include_router(graph.router, prefix="/api/v1/graph", tags=["Knowledge Graph"])
@@ -209,6 +237,9 @@ def register_routes(app: FastAPI):
     app.include_router(collectors.router, prefix="/api/v1/collectors", tags=["Data Collectors"])
     app.include_router(llm.router, prefix="/api/v1/llm", tags=["LLM Analysis"])
     app.include_router(prediction.router, prefix="/api/v1/prediction", tags=["Prediction"])
+    app.include_router(reasoning.router, prefix="/api/v1/reasoning", tags=["Ontology Reasoning"])
+    app.include_router(dragon.router, prefix="/api/v1", tags=["Dragon Strategy"])
+    app.include_router(scheduler.router, prefix="/api/v1/scheduler", tags=["Task Scheduler"])
 
 
 # 创建应用实例

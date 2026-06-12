@@ -56,6 +56,18 @@ class Settings(BaseSettings):
             return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
 
+    # TimescaleDB
+    TIMESCALE_HOST: str = "localhost"
+    TIMESCALE_PORT: int = 5433
+    TIMESCALE_USER: str = "postgres"
+    TIMESCALE_PASSWORD: str = "password"
+    TIMESCALE_DB: str = "stock_ontology"
+
+    @property
+    def TIMESCALE_URL(self) -> str:
+        """构建 TimescaleDB 连接 URL"""
+        return f"postgresql://{self.TIMESCALE_USER}:{self.TIMESCALE_PASSWORD}@{self.TIMESCALE_HOST}:{self.TIMESCALE_PORT}/{self.TIMESCALE_DB}"
+
     # Milvus (Vector Database)
     MILVUS_HOST: str = "localhost"
     MILVUS_PORT: int = 19530

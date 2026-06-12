@@ -2,6 +2,10 @@
 预测服务
 
 提供股价预测功能。
+增强功能：
+- 本体特征融合预测
+- 预测结果本体校验
+- 可解释性输出
 """
 
 from typing import Any, Dict, List, Optional
@@ -17,7 +21,25 @@ class PredictionService:
     def __init__(self):
         """初始化预测服务"""
         self._feature_engineering = FeatureEngineering()
+        self._ontology_feature_extractor = None
+        self._reasoner = None
         self._models = {}
+
+    @property
+    def ontology_features(self):
+        """获取本体特征提取器"""
+        if self._ontology_feature_extractor is None:
+            from .ontology_features import OntologyFeatureExtractor
+            self._ontology_feature_extractor = OntologyFeatureExtractor()
+        return self._ontology_feature_extractor
+
+    @property
+    def reasoner(self):
+        """获取推理引擎"""
+        if self._reasoner is None:
+            from app.core.reasoning import OntologyReasoner
+            self._reasoner = OntologyReasoner()
+        return self._reasoner
 
     def predict_price(
         self,
@@ -382,3 +404,143 @@ class PredictionService:
             return [0.5] * len(pattern)
 
         return [(p - min_val) / (max_val - min_val) for p in pattern]
+
+    def predict_with_ontology(
+        self,
+        stock_code: str,
+        price_data: List[Dict[str, Any]],
+        days: int = 5,
+    ) -> Dict[str, Any]:
+        """
+        本体增强预测
+
+        融合技术指标 + 本体特征，预测结果接受本体规则校验。
+
+        本体特征的独特价值：
+        1. 事件影响分：近30天累积事件影响（正面/负面）
+        2. 供应链风险：上下游公司集中度
+        3. 竞争压力：同行业排名和竞对数量
+        4. 机构情绪：机构持仓比例和变化
+        5. 图谱中心性：公司在知识图谱中的重要性
+
+        Args:
+            stock_code: 股票代码
+            price_data: 历史价格数据
+            days: 预测天数
+
+        Returns:
+            包含技术预测、本体特征、校验结果的完整预测
+        """
+        # 1. 技术指标预测
+        tech_prediction = self.predict_price(stock_code, price_data, days)
+
+        # 2. 趋势判断
+        trend = "neutral"
+        if tech_prediction.get("predictions"):
+            first_pred = tech_prediction["predictions"][0]
+            trend = first_pred.get("trend", "neutral")
+
+        # 3. 本体特征提取
+        ontology_feats = self.ontology_features.extract_all(stock_code, days=30)
+        flat_features = self.ontology_features.to_flat_dict(ontology_feats)
+
+        # 4. 本体规则校验
+        validation = self.reasoner.predict_with_ontology_rules(stock_code, trend)
+
+        # 5. 融合置信度
+        tech_confidence = tech_prediction.get("confidence", 0.5)
+        ontology_confidence_adj = 0.0
+
+        # 根据本体特征调整置信度
+        event_impact = flat_features.get("event_impact_score", 0)
+        if trend == "up" and event_impact > 0.5:
+            ontology_confidence_adj += 0.1  # 正面事件支持看涨
+        elif trend == "down" and event_impact < -0.5:
+            ontology_confidence_adj += 0.1  # 负面事件支持看跌
+        elif trend == "up" and event_impact < -0.5:
+            ontology_confidence_adj -= 0.15  # 矛盾：看涨但事件负面
+        elif trend == "down" and event_impact > 0.5:
+            ontology_confidence_adj -= 0.15  # 矛盾：看跌但事件正面
+
+        # 机构情绪调整
+        inst_sentiment = flat_features.get("institutional_sentiment", 0)
+        if (trend == "up" and inst_sentiment > 0) or (trend == "down" and inst_sentiment < 0):
+            ontology_confidence_adj += 0.05
+
+        final_confidence = max(0.1, min(0.95, tech_confidence + ontology_confidence_adj))
+
+        return {
+            "stock_code": stock_code,
+            "model_type": "ontology_enhanced",
+            "predictions": tech_prediction.get("predictions", []),
+            "confidence": round(final_confidence, 4),
+            "trend": trend,
+            "ontology_features": ontology_feats,
+            "ontology_features_flat": flat_features,
+            "ontology_validation": validation,
+            "is_consistent": validation.get("is_consistent", True),
+            "contradictions": validation.get("contradictions", []),
+            "explanation": self._generate_explanation(
+                stock_code, trend, flat_features, validation
+            ),
+            "generated_at": datetime.now().isoformat(),
+        }
+
+    def _generate_explanation(
+        self,
+        stock_code: str,
+        trend: str,
+        features: Dict[str, float],
+        validation: Dict[str, Any],
+    ) -> str:
+        """
+        生成可解释的预测说明
+
+        Args:
+            stock_code: 股票代码
+            trend: 预测趋势
+            features: 本体特征
+            validation: 校验结果
+
+        Returns:
+            可读的解释文本
+        """
+        trend_text = {"up": "看涨", "down": "看跌", "neutral": "中性"}.get(trend, "中性")
+
+        lines = [f"预测 {stock_code} {trend_text}，理由如下："]
+
+        # 事件影响
+        event_score = features.get("event_impact_score", 0)
+        if abs(event_score) > 0.3:
+            direction = "正面" if event_score > 0 else "负面"
+            lines.append(
+                f"  - 近期事件影响{direction}（累积分数: {event_score:.2f}），"
+                f"涉及 {int(features.get('event_count', 0))} 个事件"
+            )
+
+        # 机构情绪
+        inst_sentiment = features.get("institutional_sentiment", 0)
+        inst_count = int(features.get("institutional_count", 0))
+        if inst_count > 0:
+            sentiment_text = {1.0: "增持", -1.0: "减持", 0.0: "持平"}.get(inst_sentiment, "持平")
+            lines.append(f"  - 机构情绪: {sentiment_text}（{inst_count} 家机构持仓）")
+
+        # 竞争压力
+        pressure = features.get("competition_pressure", 0)
+        if pressure > 0.5:
+            rank = int(features.get("industry_rank", 0))
+            lines.append(f"  - 竞争压力较大（行业排名第 {rank}）")
+
+        # 供应链风险
+        supply_risk = features.get("supply_chain_risk", 0)
+        if supply_risk > 0.5:
+            lines.append(f"  - 供应链集中度风险较高（风险分数: {supply_risk:.2f}）")
+
+        # 矛盾提示
+        contradictions = validation.get("contradictions", [])
+        if contradictions:
+            lines.append("  ⚠️ 注意：存在以下矛盾：")
+            for c in contradictions:
+                lines.append(f"    - {c.get('message', '')}")
+
+        return "\n".join(lines)

@@ -17,6 +17,7 @@
           <el-menu-item index="/analysis">智能分析</el-menu-item>
           <el-menu-item index="/prediction">预测模型</el-menu-item>
           <el-menu-item index="/events">事件监控</el-menu-item>
+          <el-menu-item index="/data">数据管理</el-menu-item>
         </el-menu>
       </div>
     </el-header>

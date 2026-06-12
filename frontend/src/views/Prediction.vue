@@ -1,386 +1,278 @@
 <template>
-  <div class="prediction">
-    <!-- 股票选择 -->
-    <el-card class="control-card">
-      <el-row :gutter="20" align="middle">
-        <el-col :span="6">
-          <el-select v-model="selectedStock" placeholder="选择股票" filterable>
-            <el-option label="贵州茅台" value="600519" />
-            <el-option label="招商银行" value="600036" />
-            <el-option label="宁德时代" value="300750" />
-          </el-select>
-        </el-col>
-        <el-col :span="4">
-          <el-input-number v-model="predictDays" :min="1" :max="30" />
-          <span class="label">预测天数</span>
-        </el-col>
-        <el-col :span="4">
-          <el-select v-model="predictPeriod" placeholder="趋势周期">
-            <el-option label="周" value="week" />
-            <el-option label="月" value="month" />
-            <el-option label="季" value="quarter" />
-          </el-select>
-        </el-col>
-        <el-col :span="10">
-          <el-button type="primary" @click="predictPrice" :loading="loading">
-            价格预测
-          </el-button>
-          <el-button @click="predictTrend" :loading="loading">
-            趋势分析
-          </el-button>
-          <el-button @click="calculateRisk" :loading="loading">
-            风险评估
-          </el-button>
-        </el-col>
-      </el-row>
-    </el-card>
-
-    <!-- 预测结果 -->
-    <el-row :gutter="20" class="result-row">
-      <!-- 价格预测图表 -->
-      <el-col :span="16">
-        <el-card>
-          <template #header>
-            <span>价格预测</span>
-          </template>
-          <div ref="priceChart" class="chart-container"></div>
+  <div class="prediction-page">
+    <!-- Tab 切换 -->
+    <el-tabs v-model="activeTab" class="main-tabs">
+      <el-tab-pane label="个股预测" name="single">
+        <el-row :gutter="20">
+          <!-- 左侧：预测控制 + 图表 -->
+          <el-col :span="16">
+            <!-- 股票选择 -->
+            <el-card class="control-card">
+          <el-form :inline="true">
+            <el-form-item label="股票代码">
+              <el-input
+                v-model="stockCode"
+                placeholder="输入股票代码，如 600519"
+                style="width: 200px"
+                @keyup.enter="loadAllData"
+              />
+            </el-form-item>
+            <el-form-item label="预测天数">
+              <el-input-number v-model="days" :min="1" :max="30" />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="loadAllData" :loading="loading">
+                <el-icon><TrendCharts /></el-icon>
+                本体增强预测
+              </el-button>
+            </el-form-item>
+          </el-form>
         </el-card>
-      </el-col>
 
-      <!-- 趋势和风险 -->
-      <el-col :span="8">
+        <!-- K 线图 -->
+        <el-card v-if="priceData.length > 0" style="margin-top: 16px">
+          <KLineChart
+            :stockCode="stockCode"
+            :stockName="stockName"
+            :data="priceData"
+            :predictions="predictions"
+            :height="450"
+          />
+        </el-card>
+
         <!-- 趋势分析 -->
-        <el-card class="trend-card">
+        <el-card v-if="trendData" style="margin-top: 16px">
           <template #header>
             <span>趋势分析</span>
           </template>
-          <div v-if="trendResult" class="trend-result">
-            <div class="trend-indicator">
-              <el-icon :class="trendResult.trend">
-                <component :is="getTrendIcon(trendResult.trend)" />
-              </el-icon>
-              <span :class="['trend-text', trendResult.trend]">
-                {{ getTrendText(trendResult.trend) }}
-              </span>
+          <div class="trend-card">
+            <div class="trend-indicator" :class="trendClass">
+              <span class="icon">{{ trendIcon }}</span>
+              <span class="text">{{ trendText }}</span>
             </div>
-            <el-progress
-              :percentage="Math.round(trendResult.confidence * 100)"
-              :color="getTrendColor(trendResult.trend)"
-            />
-            <div class="trend-indicators">
-              <div v-for="(value, key) in trendResult.indicators" :key="key" class="indicator-item">
-                <span class="indicator-name">{{ key }}:</span>
-                <span class="indicator-value">{{ value }}</span>
-              </div>
+            <div class="trend-details">
+              <el-descriptions :column="2" border size="small">
+                <el-descriptions-item label="MA5">{{ trendData.indicators?.ma5 }}</el-descriptions-item>
+                <el-descriptions-item label="MA10">{{ trendData.indicators?.ma10 }}</el-descriptions-item>
+                <el-descriptions-item label="RSI">{{ trendData.indicators?.rsi }}</el-descriptions-item>
+                <el-descriptions-item label="置信度">
+                  {{ ((trendData.confidence || 0) * 100).toFixed(0) }}%
+                </el-descriptions-item>
+              </el-descriptions>
             </div>
           </div>
-          <el-empty v-else description="请选择股票进行分析" />
         </el-card>
 
         <!-- 风险评估 -->
-        <el-card class="risk-card">
+        <el-card v-if="riskData" style="margin-top: 16px">
           <template #header>
             <span>风险评估</span>
           </template>
-          <div v-if="riskResult" class="risk-result">
-            <el-progress
-              type="dashboard"
-              :percentage="riskResult.risk_score"
-              :color="getRiskColor(riskResult.risk_score)"
-            />
-            <div class="risk-label">
-              <el-tag :type="getRiskType(riskResult.risk_level)">
-                {{ getRiskText(riskResult.risk_level) }}
-              </el-tag>
-            </div>
-            <div class="risk-factors">
-              <span>风险因素:</span>
-              <ul>
-                <li v-for="factor in riskResult.factors" :key="factor">{{ factor }}</li>
-              </ul>
-            </div>
-          </div>
-          <el-empty v-else description="请选择股票进行分析" />
+          <el-row :gutter="20">
+            <el-col :span="8" style="text-align: center">
+              <el-progress
+                type="dashboard"
+                :percentage="riskData.risk_score || 0"
+                :color="riskColor"
+                :width="120"
+              />
+              <div class="risk-label">{{ riskLevelText }}</div>
+            </el-col>
+            <el-col :span="16">
+              <el-descriptions :column="2" border size="small">
+                <el-descriptions-item label="年化波动率">
+                  {{ ((riskData.volatility || 0) * 100).toFixed(2) }}%
+                </el-descriptions-item>
+                <el-descriptions-item label="最大回撤">
+                  {{ ((riskData.max_drawdown || 0) * 100).toFixed(2) }}%
+                </el-descriptions-item>
+              </el-descriptions>
+              <div v-if="riskData.factors?.length > 0" style="margin-top: 12px">
+                <span style="font-size: 13px; color: #909399">风险因素：</span>
+                <el-tag v-for="f in riskData.factors" :key="f" type="warning" size="small" style="margin: 2px">
+                  {{ f }}
+                </el-tag>
+              </div>
+            </el-col>
+          </el-row>
         </el-card>
       </el-col>
+
+      <!-- 右侧：可解释性面板 -->
+      <el-col :span="8">
+        <ExplainabilityPanel
+          :prediction="ontologyResult"
+          :ontologyFeatures="ontologyResult?.ontology_features"
+          :contradictions="ontologyResult?.contradictions"
+          :explanation="ontologyResult?.explanation"
+          :causalChain="causalChain"
+        />
+      </el-col>
     </el-row>
+      </el-tab-pane>
+
+      <!-- 上涨趋势预测 Tab -->
+      <el-tab-pane label="上涨趋势预测" name="rising">
+        <RisingStocks @select="onRisingStockSelect" />
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { predictionApi } from '@/api'
-import * as echarts from 'echarts'
+import { ref, computed } from 'vue'
+import { ElMessage } from 'element-plus'
+import { predictionApi, reasoningApi } from '@/api'
+import KLineChart from '@/components/KLineChart.vue'
+import ExplainabilityPanel from '@/components/ExplainabilityPanel.vue'
+import RisingStocks from '@/components/RisingStocks.vue'
 
-const selectedStock = ref('')
-const predictDays = ref(5)
-const predictPeriod = ref('week')
+const activeTab = ref('single')
+const stockCode = ref('600519')
+const stockName = ref('')
+const days = ref(5)
 const loading = ref(false)
-const trendResult = ref<any>(null)
-const riskResult = ref<any>(null)
-const priceChart = ref<HTMLElement>()
 
-let chart: echarts.ECharts | null = null
+const priceData = ref<any[]>([])
+const predictions = ref<any[]>([])
+const trendData = ref<any>(null)
+const riskData = ref<any>(null)
+const ontologyResult = ref<any>(null)
+const causalChain = ref<any>(null)
 
-onMounted(() => {
-  initChart()
+const trendClass = computed(() => {
+  const trend = trendData.value?.trend
+  if (trend === 'bullish' || trend === 'up') return 'trend-up'
+  if (trend === 'bearish' || trend === 'down') return 'trend-down'
+  return 'trend-neutral'
 })
 
-const initChart = () => {
-  if (!priceChart.value) return
-  chart = echarts.init(priceChart.value)
-  window.addEventListener('resize', () => chart?.resize())
-}
+const trendIcon = computed(() => {
+  const trend = trendData.value?.trend
+  if (trend === 'bullish' || trend === 'up') return '📈'
+  if (trend === 'bearish' || trend === 'down') return '📉'
+  return '➡️'
+})
 
-const predictPrice = async () => {
-  if (!selectedStock.value) return
+const trendText = computed(() => {
+  const trend = trendData.value?.trend
+  if (trend === 'bullish' || trend === 'up') return '看涨'
+  if (trend === 'bearish' || trend === 'down') return '看跌'
+  return '中性'
+})
 
-  loading.value = true
-  try {
-    const res: any = await predictionApi.predictPrice(selectedStock.value, predictDays.value)
-    if (res.success) {
-      renderPredictionChart(res.data)
-    }
-  } catch (e) {
-    console.error('Prediction failed:', e)
-  } finally {
-    loading.value = false
-  }
-}
-
-const renderPredictionChart = (data: any) => {
-  if (!chart) return
-
-  const predictions = data.predictions || []
-  const days = predictions.map((p: any) => `Day ${p.day}`)
-  const prices = predictions.map((p: any) => p.predicted_price)
-  const upper = predictions.map((p: any) => p.confidence_interval?.upper || 0)
-  const lower = predictions.map((p: any) => p.confidence_interval?.lower || 0)
-
-  const option = {
-    tooltip: {
-      trigger: 'axis',
-    },
-    legend: {
-      data: ['预测价格', '置信区间'],
-    },
-    xAxis: {
-      type: 'category',
-      data: days,
-    },
-    yAxis: {
-      type: 'value',
-      name: '价格',
-    },
-    series: [
-      {
-        name: '预测价格',
-        type: 'line',
-        data: prices,
-        itemStyle: { color: '#409eff' },
-      },
-      {
-        name: '置信上界',
-        type: 'line',
-        data: upper,
-        lineStyle: { opacity: 0 },
-        areaStyle: { color: '#409eff', opacity: 0.1 },
-        stack: 'confidence',
-      },
-      {
-        name: '置信下界',
-        type: 'line',
-        data: lower,
-        lineStyle: { opacity: 0 },
-        areaStyle: { color: '#fff' },
-        stack: 'confidence',
-      },
-    ],
-  }
-
-  chart.setOption(option, true)
-}
-
-const predictTrend = async () => {
-  if (!selectedStock.value) return
-
-  loading.value = true
-  try {
-    const res: any = await predictionApi.predictTrend(selectedStock.value, predictPeriod.value)
-    if (res.success) {
-      trendResult.value = res.data
-    }
-  } catch (e) {
-    console.error('Trend prediction failed:', e)
-  } finally {
-    loading.value = false
-  }
-}
-
-const calculateRisk = async () => {
-  if (!selectedStock.value) return
-
-  loading.value = true
-  try {
-    const res: any = await predictionApi.calculateRisk(selectedStock.value)
-    if (res.success) {
-      riskResult.value = res.data
-    }
-  } catch (e) {
-    console.error('Risk calculation failed:', e)
-  } finally {
-    loading.value = false
-  }
-}
-
-const getTrendIcon = (trend: string) => {
-  const map: Record<string, string> = {
-    bullish: 'Top',
-    bearish: 'Bottom',
-    neutral: 'Right',
-  }
-  return map[trend] || 'Right'
-}
-
-const getTrendText = (trend: string) => {
-  const map: Record<string, string> = {
-    bullish: '看涨',
-    bearish: '看跌',
-    neutral: '中性',
-  }
-  return map[trend] || '未知'
-}
-
-const getTrendColor = (trend: string) => {
-  const map: Record<string, string> = {
-    bullish: '#67c23a',
-    bearish: '#f56c6c',
-    neutral: '#e6a23c',
-  }
-  return map[trend] || '#909399'
-}
-
-const getRiskColor = (score: number) => {
+const riskColor = computed(() => {
+  const score = riskData.value?.risk_score || 0
   if (score < 30) return '#67c23a'
   if (score < 60) return '#e6a23c'
   return '#f56c6c'
+})
+
+const riskLevelText = computed(() => {
+  const level = riskData.value?.risk_level
+  if (level === 'low') return '低风险'
+  if (level === 'medium') return '中风险'
+  return '高风险'
+})
+
+const loadAllData = async () => {
+  if (!stockCode.value) {
+    ElMessage.warning('请输入股票代码')
+    return
+  }
+
+  loading.value = true
+  try {
+    // 并行加载所有数据
+    const [priceDataRes, priceRes, trendRes, riskRes, ontoRes] = await Promise.all([
+      predictionApi.getPriceData(stockCode.value, 120),
+      predictionApi.predictPrice(stockCode.value, days.value),
+      predictionApi.predictTrend(stockCode.value, 'week'),
+      predictionApi.calculateRisk(stockCode.value),
+      predictionApi.ontologyEnhanced(stockCode.value, days.value),
+    ])
+
+    // K 线图数据
+    if ((priceDataRes as any).success) {
+      const data = (priceDataRes as any).data
+      priceData.value = data?.prices || []
+      stockName.value = data?.stock_name || ''
+    }
+
+    // 预测结果
+    if ((priceRes as any).success) {
+      predictions.value = (priceRes as any).data?.predictions || []
+    }
+    if ((trendRes as any).success) {
+      trendData.value = (trendRes as any).data
+    }
+    if ((riskRes as any).success) {
+      riskData.value = (riskRes as any).data
+    }
+    if ((ontoRes as any).success) {
+      ontologyResult.value = (ontoRes as any).data
+    }
+
+    // 获取因果链
+    try {
+      const chainsRes = await reasoningApi.getChains(stockCode.value, 30) as any
+      if (chainsRes.success && chainsRes.data?.chains?.length > 0) {
+        causalChain.value = chainsRes.data.chains[0]
+      }
+    } catch (_) {}
+
+    ElMessage.success('预测完成')
+  } catch (e: any) {
+    ElMessage.error(e?.message || '预测失败')
+  } finally {
+    loading.value = false
+  }
 }
 
-const getRiskType = (level: string) => {
-  const map: Record<string, string> = {
-    low: 'success',
-    medium: 'warning',
-    high: 'danger',
-  }
-  return map[level] || 'info'
-}
-
-const getRiskText = (level: string) => {
-  const map: Record<string, string> = {
-    low: '低风险',
-    medium: '中风险',
-    high: '高风险',
-  }
-  return map[level] || '未知'
+// 从上涨趋势列表选择股票
+const onRisingStockSelect = (code: string) => {
+  stockCode.value = code
+  activeTab.value = 'single'
+  loadAllData()
 }
 </script>
 
 <style scoped>
-.prediction {
+.prediction-page {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.trend-card {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.control-card {
-  flex-shrink: 0;
-}
-
-.label {
-  font-size: 12px;
-  color: #909399;
-  margin-left: 8px;
-}
-
-.result-row {
-  flex: 1;
-}
-
-.chart-container {
-  height: 400px;
-}
-
-.trend-card,
-.risk-card {
-  margin-bottom: 16px;
-}
-
-.trend-result,
-.risk-result {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 24px;
 }
 
 .trend-indicator {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  font-size: 24px;
+  padding: 16px 24px;
+  border-radius: 12px;
+  min-width: 100px;
 }
 
-.trend-indicator .bullish {
-  color: #67c23a;
-}
+.trend-up { background: #f0f9eb; }
+.trend-down { background: #fef0f0; }
+.trend-neutral { background: #f5f7fa; }
 
-.trend-indicator .bearish {
-  color: #f56c6c;
-}
+.trend-indicator .icon { font-size: 32px; }
+.trend-indicator .text { font-size: 18px; font-weight: 600; margin-top: 8px; }
+.trend-up .text { color: #67c23a; }
+.trend-down .text { color: #f56c6c; }
+.trend-neutral .text { color: #909399; }
 
-.trend-indicator .neutral {
-  color: #e6a23c;
-}
-
-.trend-text {
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.trend-indicators {
-  width: 100%;
-}
-
-.indicator-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.indicator-name {
-  color: #909399;
-}
-
-.indicator-value {
-  font-weight: bold;
-}
+.trend-details { flex: 1; }
 
 .risk-label {
+  font-size: 16px;
+  font-weight: 600;
   margin-top: 8px;
-}
-
-.risk-factors {
-  width: 100%;
-}
-
-.risk-factors ul {
-  margin-top: 8px;
-  padding-left: 20px;
-}
-
-.risk-factors li {
-  color: #606266;
-  margin-bottom: 4px;
 }
 </style>

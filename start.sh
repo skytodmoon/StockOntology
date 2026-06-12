@@ -214,29 +214,40 @@ install_node_deps() {
     echo ""
 }
 
-# 启动后端服务
+# 启动后端服务（API + Celery）
 start_backend() {
     echo -e "${BLUE}=== 启动后端服务 ===${NC}"
-    
+
     if check_local_service "后端 API" "8000"; then
         echo -e "${GREEN}后端服务已运行，跳过启动${NC}"
         return 0
     fi
-    
+
     source venv/bin/activate
-    
+
     if [ -d "backend" ]; then
         cd backend
-        uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
-        BACKEND_PID=$!
-        cd ..
-    else
-        echo -e "${YELLOW}backend 目录不存在，尝试从项目根目录启动...${NC}"
-        uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
-        BACKEND_PID=$!
     fi
-    
-    echo -e "${GREEN}后端服务已启动 (PID: $BACKEND_PID)${NC}"
+
+    # 启动 FastAPI
+    echo -e "${BLUE}启动 FastAPI 服务...${NC}"
+    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
+    BACKEND_PID=$!
+    echo -e "${GREEN}FastAPI 已启动 (PID: $BACKEND_PID)${NC}"
+
+    # 启动 Celery Worker
+    echo -e "${BLUE}启动 Celery Worker...${NC}"
+    celery -A app.celery_app worker --loglevel=info --concurrency=4 &
+    CELERY_WORKER_PID=$!
+    echo -e "${GREEN}Celery Worker 已启动 (PID: $CELERY_WORKER_PID)${NC}"
+
+    # 启动 Celery Beat
+    echo -e "${BLUE}启动 Celery Beat...${NC}"
+    celery -A app.celery_app beat --loglevel=info &
+    CELERY_BEAT_PID=$!
+    echo -e "${GREEN}Celery Beat 已启动 (PID: $CELERY_BEAT_PID)${NC}"
+
+    cd "$PROJECT_ROOT"
     echo ""
 }
 
@@ -272,16 +283,25 @@ show_access_info() {
     echo -e "  前端:        ${GREEN}http://localhost:3000${NC}"
     echo -e "  后端 API:    ${GREEN}http://localhost:8000${NC}"
     echo -e "  API 文档:    ${GREEN}http://localhost:8000/docs${NC}"
+    echo -e "  Celery Worker: ${GREEN}后台运行中${NC}"
+    echo -e "  Celery Beat:   ${GREEN}定时调度中${NC}"
     echo ""
-    echo -e "${BLUE}远程服务 ($REMOTE_HOST):${NC}"
-    echo -e "  Neo4j Web:   ${GREEN}http://$REMOTE_HOST:7474${NC}"
-    echo -e "  Neo4j Bolt:  ${GREEN}bolt://$REMOTE_HOST:7687${NC}"
-    echo -e "  PostgreSQL:  ${GREEN}$REMOTE_HOST:5432${NC}"
-    echo -e "  TimescaleDB: ${GREEN}$REMOTE_HOST:5433${NC}"
-    echo -e "  Redis:       ${GREEN}$REMOTE_HOST:6379${NC}"
+    echo -e "${BLUE}数据库服务:${NC}"
+    echo -e "  Neo4j Web:   ${GREEN}http://localhost:7474${NC}"
+    echo -e "  Neo4j Bolt:  ${GREEN}bolt://localhost:7687${NC}"
+    echo -e "  PostgreSQL:  ${GREEN}localhost:5432${NC}"
+    echo -e "  TimescaleDB: ${GREEN}localhost:5433${NC}"
+    echo -e "  Redis:       ${GREEN}localhost:6379${NC}"
     echo ""
-    echo -e "${BLUE}LLM 服务:${NC}"
-    echo -e "  小米 MiMo:   ${GREEN}https://token-plan-cn.xiaomimimo.com/v1${NC}"
+    echo -e "${BLUE}定时任务:${NC}"
+    echo -e "  行情采集:    每日 18:00 (工作日)"
+    echo -e "  新闻采集:    每小时 9-23 点"
+    echo -e "  事件推理:    每小时 30 分"
+    echo -e "  预测扫描:    每日 20:00"
+    echo ""
+    echo -e "${BLUE}手动触发:${NC}"
+    echo -e "  前端页面:    http://localhost:3000/data"
+    echo -e "  API:         http://localhost:8000/docs#/Task Scheduler"
     echo ""
     echo -e "${YELLOW}按 Ctrl+C 停止所有服务${NC}"
     echo ""
@@ -291,17 +311,27 @@ show_access_info() {
 cleanup() {
     echo ""
     echo -e "${YELLOW}正在停止服务...${NC}"
-    
+
     if [ ! -z "$BACKEND_PID" ]; then
         kill $BACKEND_PID 2>/dev/null || true
-        echo -e "${GREEN}✓ 后端服务已停止${NC}"
+        echo -e "${GREEN}✓ FastAPI 已停止${NC}"
     fi
-    
+
+    if [ ! -z "$CELERY_WORKER_PID" ]; then
+        kill $CELERY_WORKER_PID 2>/dev/null || true
+        echo -e "${GREEN}✓ Celery Worker 已停止${NC}"
+    fi
+
+    if [ ! -z "$CELERY_BEAT_PID" ]; then
+        kill $CELERY_BEAT_PID 2>/dev/null || true
+        echo -e "${GREEN}✓ Celery Beat 已停止${NC}"
+    fi
+
     if [ ! -z "$FRONTEND_PID" ]; then
         kill $FRONTEND_PID 2>/dev/null || true
         echo -e "${GREEN}✓ 前端服务已停止${NC}"
     fi
-    
+
     echo -e "${GREEN}所有服务已停止${NC}"
     exit 0
 }

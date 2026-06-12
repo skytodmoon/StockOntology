@@ -239,9 +239,9 @@ class OntologyReasoner:
                    CASE
                      WHEN target:Company THEN target.stockName
                      WHEN target:Industry THEN target.name
-                     ELSE toString(target)
+                     ELSE COALESCE(target.stockName, target.name, target.title, '')
                    END AS name,
-                   r.impactDirection AS direction
+                   COALESCE(r.impactDirection, 'neutral') AS direction
         """
         result = self.neo4j.execute_query(query, {"event_id": event_id})
         return [dict(r) for r in result]
@@ -503,13 +503,13 @@ class OntologyReasoner:
         """
         query = """
             MATCH (e:MarketEvent)-[r:IMPACTS]->(c:Company {stockCode: $stock_code})
-            WHERE e.eventDate >= date() - duration({days: $days})
+            WHERE e.eventDate IS NOT NULL
             RETURN e.eventId AS event_id,
                    e.title AS title,
                    e.eventType AS event_type,
                    e.impactLevel AS impact_level,
                    e.eventDate AS event_date,
-                   r.impactDirection AS direction
+                   COALESCE(r.impactDirection, 'neutral') AS direction
             ORDER BY e.eventDate DESC
         """
         result = self.neo4j.execute_query(

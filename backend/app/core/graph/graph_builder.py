@@ -2,6 +2,14 @@
 图谱构建器
 
 提供知识图谱的构建功能。
+扩展功能：
+- AnalysisResult 节点（分析结果留痕）
+- CausalChain 节点（因果传导链记录）
+- ReasoningStep 节点（推理步骤记录）
+- PredictionRecord 节点（预测记录留痕）
+- SentimentRecord 节点（情感分析记录）
+- TechnicalIndicator 节点（技术指标快照）
+- StockPrice 节点（行情数据）
 """
 
 from typing import Any, Dict, List, Optional
@@ -485,3 +493,524 @@ class GraphBuilder:
             if self.create_financial_report(report):
                 count += 1
         return count
+
+    # ==================== 新增节点类型：分析推理相关 ====================
+
+    def create_analysis_result(self, result_data: Dict[str, Any]) -> bool:
+        """
+        创建分析结果节点
+
+        Args:
+            result_data: 分析结果数据，应包含：
+                - result_id: 结果ID
+                - result_type: 结果类型（stock_analysis, event_impact 等）
+                - content: 分析内容
+                - confidence: 置信度
+                - trace_id: 溯源ID
+
+        Returns:
+            是否创建成功
+        """
+        query = """
+            MERGE (ar:AnalysisResult {traceId: $traceId})
+            SET ar += $properties
+            RETURN ar
+        """
+        try:
+            self.neo4j.execute_write(
+                query,
+                {
+                    "traceId": result_data.get("trace_id", result_data.get("traceId")),
+                    "properties": result_data,
+                }
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create analysis result: {e}")
+            return False
+
+    def create_causal_chain(self, chain_data: Dict[str, Any]) -> bool:
+        """
+        创建因果传导链节点
+
+        Args:
+            chain_data: 因果链数据，应包含：
+                - chain_id: 链ID
+                - event_id: 源事件ID
+                - event_name: 源事件名称
+                - event_type: 事件类型
+                - conclusion: 结论
+                - overall_confidence: 综合置信度
+                - total_affected_companies: 受影响公司数
+
+        Returns:
+            是否创建成功
+        """
+        query = """
+            MERGE (cc:CausalChain {chainId: $chainId})
+            SET cc += $properties
+            RETURN cc
+        """
+        try:
+            self.neo4j.execute_write(
+                query,
+                {
+                    "chainId": chain_data.get("chain_id", chain_data.get("chainId")),
+                    "properties": chain_data,
+                }
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create causal chain: {e}")
+            return False
+
+    def create_reasoning_step(self, step_data: Dict[str, Any]) -> bool:
+        """
+        创建推理步骤节点
+
+        Args:
+            step_data: 推理步骤数据
+
+        Returns:
+            是否创建成功
+        """
+        query = """
+            MERGE (rs:ReasoningStep {stepId: $stepId})
+            SET rs += $properties
+            RETURN rs
+        """
+        try:
+            self.neo4j.execute_write(
+                query,
+                {
+                    "stepId": step_data.get("step_id", step_data.get("stepId")),
+                    "properties": step_data,
+                }
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create reasoning step: {e}")
+            return False
+
+    def create_prediction_record(self, prediction_data: Dict[str, Any]) -> bool:
+        """
+        创建预测记录节点
+
+        Args:
+            prediction_data: 预测记录数据，应包含：
+                - record_id: 记录ID
+                - stock_code: 股票代码
+                - model_type: 模型类型
+                - prediction: 预测结果
+                - confidence: 置信度
+                - features: 使用的特征
+
+        Returns:
+            是否创建成功
+        """
+        query = """
+            MERGE (pr:PredictionRecord {recordId: $recordId})
+            SET pr += $properties
+            RETURN pr
+        """
+        try:
+            self.neo4j.execute_write(
+                query,
+                {
+                    "recordId": prediction_data.get("record_id", prediction_data.get("recordId")),
+                    "properties": prediction_data,
+                }
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create prediction record: {e}")
+            return False
+
+    def create_sentiment_record(self, sentiment_data: Dict[str, Any]) -> bool:
+        """
+        创建情感记录节点
+
+        Args:
+            sentiment_data: 情感记录数据
+
+        Returns:
+            是否创建成功
+        """
+        query = """
+            MERGE (sr:SentimentRecord {recordId: $recordId})
+            SET sr += $properties
+            RETURN sr
+        """
+        try:
+            self.neo4j.execute_write(
+                query,
+                {
+                    "recordId": sentiment_data.get("record_id", sentiment_data.get("recordId")),
+                    "properties": sentiment_data,
+                }
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create sentiment record: {e}")
+            return False
+
+    def create_technical_indicator(self, indicator_data: Dict[str, Any]) -> bool:
+        """
+        创建技术指标快照节点
+
+        Args:
+            indicator_data: 技术指标数据
+
+        Returns:
+            是否创建成功
+        """
+        query = """
+            MERGE (ti:TechnicalIndicator {
+                stockCode: $stockCode,
+                timestamp: $timestamp
+            })
+            SET ti += $properties
+            RETURN ti
+        """
+        try:
+            self.neo4j.execute_write(
+                query,
+                {
+                    "stockCode": indicator_data.get("stock_code", indicator_data.get("stockCode")),
+                    "timestamp": indicator_data.get("timestamp"),
+                    "properties": indicator_data,
+                }
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create technical indicator: {e}")
+            return False
+
+    def create_stock_price(self, price_data: Dict[str, Any]) -> bool:
+        """
+        创建行情数据节点
+
+        Args:
+            price_data: 行情数据，应包含：
+                - stock_code: 股票代码
+                - trade_date: 交易日期
+                - open/high/low/close: OHLC
+                - volume: 成交量
+                - amount: 成交额
+
+        Returns:
+            是否创建成功
+        """
+        query = """
+            MERGE (sp:StockPrice {
+                stockCode: $stockCode,
+                tradeDate: $tradeDate
+            })
+            SET sp += $properties
+            RETURN sp
+        """
+        try:
+            self.neo4j.execute_write(
+                query,
+                {
+                    "stockCode": price_data.get("stock_code", price_data.get("stockCode")),
+                    "tradeDate": price_data.get("trade_date", price_data.get("tradeDate")),
+                    "properties": price_data,
+                }
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create stock price: {e}")
+            return False
+
+    # ==================== 新增关系类型 ====================
+
+    def create_chain_step_relationship(
+        self,
+        chain_id: str,
+        step_id: str,
+    ) -> bool:
+        """
+        创建因果链-推理步骤关系
+
+        Args:
+            chain_id: 因果链ID
+            step_id: 推理步骤ID
+
+        Returns:
+            是否创建成功
+        """
+        query = """
+            MATCH (cc:CausalChain {chainId: $chainId})
+            MATCH (rs:ReasoningStep {stepId: $stepId})
+            MERGE (cc)-[:HAS_STEP]->(rs)
+            RETURN cc, rs
+        """
+        try:
+            self.neo4j.execute_write(
+                query, {"chainId": chain_id, "stepId": step_id}
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create chain-step relationship: {e}")
+            return False
+
+    def create_step_node_relationship(
+        self,
+        step_id: str,
+        node_id: str,
+        node_type: str,
+        direction: str = "from",
+    ) -> bool:
+        """
+        创建推理步骤-实体节点关系
+
+        Args:
+            step_id: 推理步骤ID
+            node_id: 实体节点ID（Neo4j element_id）
+            node_type: 实体节点类型
+            direction: 方向（from=源节点，to=目标节点）
+
+        Returns:
+            是否创建成功
+        """
+        rel_type = "FROM_NODE" if direction == "from" else "TO_NODE"
+        query = f"""
+            MATCH (rs:ReasoningStep {{stepId: $stepId}})
+            MATCH (n) WHERE elementId(n) = $nodeId
+            MERGE (rs)-[:{rel_type}]->(n)
+            RETURN rs, n
+        """
+        try:
+            self.neo4j.execute_write(
+                query, {"stepId": step_id, "nodeId": node_id}
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create step-node relationship: {e}")
+            return False
+
+    def create_analysis_evidence_relationship(
+        self,
+        trace_id: str,
+        evidence_node_id: str,
+    ) -> bool:
+        """
+        创建分析结果-依据关系
+
+        Args:
+            trace_id: 分析结果溯源ID
+            evidence_node_id: 依据节点ID
+
+        Returns:
+            是否创建成功
+        """
+        query = """
+            MATCH (ar:AnalysisResult {traceId: $traceId})
+            MATCH (n) WHERE elementId(n) = $nodeId
+            MERGE (ar)-[:EVIDENCED_BY]->(n)
+            RETURN ar, n
+        """
+        try:
+            self.neo4j.execute_write(
+                query, {"traceId": trace_id, "nodeId": evidence_node_id}
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create analysis-evidence relationship: {e}")
+            return False
+
+    def create_analysis_chain_relationship(
+        self,
+        trace_id: str,
+        chain_id: str,
+    ) -> bool:
+        """
+        创建分析结果-因果链关系
+
+        Args:
+            trace_id: 分析结果溯源ID
+            chain_id: 因果链ID
+
+        Returns:
+            是否创建成功
+        """
+        query = """
+            MATCH (ar:AnalysisResult {traceId: $traceId})
+            MATCH (cc:CausalChain {chainId: $chainId})
+            MERGE (ar)-[:BASED_ON_CHAIN]->(cc)
+            RETURN ar, cc
+        """
+        try:
+            self.neo4j.execute_write(
+                query, {"traceId": trace_id, "chainId": chain_id}
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create analysis-chain relationship: {e}")
+            return False
+
+    def create_prediction_company_relationship(
+        self,
+        record_id: str,
+        stock_code: str,
+    ) -> bool:
+        """
+        创建预测记录-公司关系
+
+        Args:
+            record_id: 预测记录ID
+            stock_code: 股票代码
+
+        Returns:
+            是否创建成功
+        """
+        query = """
+            MATCH (pr:PredictionRecord {recordId: $recordId})
+            MATCH (c:Company {stockCode: $stockCode})
+            MERGE (pr)-[:FOR_COMPANY]->(c)
+            RETURN pr, c
+        """
+        try:
+            self.neo4j.execute_write(
+                query, {"recordId": record_id, "stockCode": stock_code}
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create prediction-company relationship: {e}")
+            return False
+
+    def create_sentiment_company_relationship(
+        self,
+        record_id: str,
+        stock_code: str,
+    ) -> bool:
+        """
+        创建情感记录-公司关系
+
+        Args:
+            record_id: 情感记录ID
+            stock_code: 股票代码
+
+        Returns:
+            是否创建成功
+        """
+        query = """
+            MATCH (sr:SentimentRecord {recordId: $recordId})
+            MATCH (c:Company {stockCode: $stockCode})
+            MERGE (sr)-[:ABOUT]->(c)
+            RETURN sr, c
+        """
+        try:
+            self.neo4j.execute_write(
+                query, {"recordId": record_id, "stockCode": stock_code}
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create sentiment-company relationship: {e}")
+            return False
+
+    def create_stock_price_company_relationship(
+        self,
+        stock_code: str,
+        trade_date: str,
+    ) -> bool:
+        """
+        创建行情数据-公司关系
+
+        Args:
+            stock_code: 股票代码
+            trade_date: 交易日期
+
+        Returns:
+            是否创建成功
+        """
+        query = """
+            MATCH (sp:StockPrice {stockCode: $stockCode, tradeDate: $tradeDate})
+            MATCH (c:Company {stockCode: $stockCode})
+            MERGE (c)-[:HAS_PRICE]->(sp)
+            RETURN c, sp
+        """
+        try:
+            self.neo4j.execute_write(
+                query, {"stockCode": stock_code, "tradeDate": trade_date}
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create stock-price-company relationship: {e}")
+            return False
+
+    # ==================== 批量写入因果链 ====================
+
+    def save_causal_chain(self, chain) -> bool:
+        """
+        将 CausalChain 对象完整写入图谱
+
+        包括：
+        - CausalChain 节点
+        - ReasoningStep 节点
+        - HAS_STEP 关系
+        - FROM_NODE / TO_NODE 关系
+
+        Args:
+            chain: CausalChain 对象（来自 reasoning.causal_chain）
+
+        Returns:
+            是否写入成功
+        """
+        try:
+            # 1. 创建 CausalChain 节点
+            chain_dict = chain.to_dict()
+            self.create_causal_chain({
+                "chain_id": chain.chain_id,
+                "chainId": chain.chain_id,
+                "event_id": chain.event_id,
+                "event_name": chain.event_name,
+                "event_type": chain.event_type,
+                "conclusion": chain.conclusion,
+                "overall_confidence": chain.overall_confidence,
+                "total_affected_companies": chain.total_affected_companies,
+                "timestamp": chain.created_at.isoformat(),
+            })
+
+            # 2. 创建 ReasoningStep 节点和关系
+            for step in chain.steps:
+                self.create_reasoning_step({
+                    "step_id": step.step_id,
+                    "stepId": step.step_id,
+                    "rule_applied": step.rule_applied,
+                    "rule_id": step.rule_id,
+                    "evidence": step.evidence,
+                    "confidence": step.confidence,
+                    "impact_direction": step.impact_direction,
+                    "depth": step.depth,
+                    "source_node_name": step.source_node_name,
+                    "target_node_name": step.target_node_name,
+                })
+
+                # 创建 HAS_STEP 关系
+                self.create_chain_step_relationship(chain.chain_id, step.step_id)
+
+                # 创建 FROM_NODE 关系
+                if step.source_node_id:
+                    self.create_step_node_relationship(
+                        step.step_id, step.source_node_id,
+                        step.source_node_type, "from"
+                    )
+
+                # 创建 TO_NODE 关系
+                if step.target_node_id:
+                    self.create_step_node_relationship(
+                        step.step_id, step.target_node_id,
+                        step.target_node_type, "to"
+                    )
+
+            logger.info(
+                f"Causal chain {chain.chain_id} saved to graph "
+                f"with {len(chain.steps)} steps"
+            )
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to save causal chain: {e}")
+            return False

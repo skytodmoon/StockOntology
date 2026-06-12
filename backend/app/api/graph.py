@@ -5,7 +5,7 @@
 """
 
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Body
 from pydantic import BaseModel
 from loguru import logger
 
@@ -330,8 +330,8 @@ async def init_database():
 
 @router.post("/query", response_model=GraphResponse)
 async def execute_query(
-    query: str,
-    parameters: Optional[Dict[str, Any]] = None,
+    query: str = Body(..., description="Cypher 查询语句"),
+    parameters: Optional[Dict[str, Any]] = Body(None, description="查询参数"),
 ):
     """执行 Cypher 查询"""
     try:

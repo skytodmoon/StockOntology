@@ -3,6 +3,17 @@
     <!-- 统计卡片 -->
     <el-row :gutter="20" class="stats-row">
       <el-col :span="6">
+        <el-card class="stat-card" shadow="hover" @click="navigateToDragon">
+          <div class="stat-icon" style="background: #f56c6c">
+            <el-icon><Crown /></el-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ dragonStats.totalDragons || 0 }}</div>
+            <div class="stat-label">龙头股</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
         <el-card class="stat-card" shadow="hover">
           <div class="stat-icon" style="background: #409eff">
             <el-icon><OfficeBuilding /></el-icon>
@@ -27,22 +38,59 @@
       <el-col :span="6">
         <el-card class="stat-card" shadow="hover">
           <div class="stat-icon" style="background: #e6a23c">
-            <el-icon><User /></el-icon>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ stats.investors || 0 }}</div>
-            <div class="stat-label">机构投资者</div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="stat-card" shadow="hover">
-          <div class="stat-icon" style="background: #f56c6c">
             <el-icon><Bell /></el-icon>
           </div>
           <div class="stat-content">
             <div class="stat-value">{{ stats.events || 0 }}</div>
             <div class="stat-label">市场事件</div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 快捷入口 -->
+    <el-row :gutter="20" class="quick-links">
+      <el-col :span="6">
+        <el-card class="quick-link-card" shadow="hover" @click="navigateToDragon">
+          <div class="quick-link-content">
+            <el-icon class="quick-link-icon" color="#f56c6c"><Crown /></el-icon>
+            <div class="quick-link-text">
+              <div class="quick-link-title">龙头战法</div>
+              <div class="quick-link-desc">分析龙头股与供应链</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card class="quick-link-card" shadow="hover" @click="navigateTo('/graph')">
+          <div class="quick-link-content">
+            <el-icon class="quick-link-icon" color="#409eff"><Share /></el-icon>
+            <div class="quick-link-text">
+              <div class="quick-link-title">知识图谱</div>
+              <div class="quick-link-desc">探索企业关系网络</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card class="quick-link-card" shadow="hover" @click="navigateTo('/analysis')">
+          <div class="quick-link-content">
+            <el-icon class="quick-link-icon" color="#67c23a"><DataAnalysis /></el-icon>
+            <div class="quick-link-text">
+              <div class="quick-link-title">数据分析</div>
+              <div class="quick-link-desc">深度数据分析报告</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card class="quick-link-card" shadow="hover" @click="navigateTo('/prediction')">
+          <div class="quick-link-content">
+            <el-icon class="quick-link-icon" color="#e6a23c"><TrendCharts /></el-icon>
+            <div class="quick-link-text">
+              <div class="quick-link-title">智能预测</div>
+              <div class="quick-link-desc">AI驱动的价格预测</div>
+            </div>
           </div>
         </el-card>
       </el-col>
@@ -126,18 +174,20 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { graphApi, eventApi } from '@/api'
+import { graphApi, eventApi, dragonApi } from '@/api'
 import * as echarts from 'echarts'
 
 const router = useRouter()
 const searchKeyword = ref('')
 const stats = ref<any>({})
+const dragonStats = ref<any>({})
 const marketData = ref<any[]>([])
 const recentEvents = ref<any[]>([])
 const industryChart = ref<HTMLElement>()
 
 onMounted(async () => {
   await loadStats()
+  await loadDragonStats()
   await loadRecentEvents()
   initChart()
 })
@@ -156,6 +206,17 @@ const loadStats = async () => {
     }
   } catch (e) {
     console.error('Failed to load stats:', e)
+  }
+}
+
+const loadDragonStats = async () => {
+  try {
+    const res: any = await dragonApi.getDragonAnalysis()
+    if (res.success) {
+      dragonStats.value = res.data.summary || {}
+    }
+  } catch (e) {
+    console.error('Failed to load dragon stats:', e)
   }
 }
 
@@ -215,6 +276,14 @@ const handleSearch = () => {
   }
 }
 
+const navigateToDragon = () => {
+  router.push('/dragon')
+}
+
+const navigateTo = (path: string) => {
+  router.push(path)
+}
+
 const getEventTypeTag = (type: string) => {
   const map: Record<string, string> = {
     PolicyEvent: 'warning',
@@ -247,7 +316,12 @@ const getImpactTag = (level: string) => {
 .stat-card {
   display: flex;
   align-items: center;
-  padding: 20px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
 }
 
 .stat-card :deep(.el-card__body) {
@@ -282,6 +356,46 @@ const getImpactTag = (level: string) => {
   font-size: 14px;
   color: #909399;
   margin-top: 4px;
+}
+
+.quick-links {
+  margin-bottom: 20px;
+}
+
+.quick-link-card {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.quick-link-card:hover {
+  transform: translateY(-4px);
+}
+
+.quick-link-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+}
+
+.quick-link-icon {
+  font-size: 32px;
+}
+
+.quick-link-text {
+  flex: 1;
+}
+
+.quick-link-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #303133;
+  margin-bottom: 4px;
+}
+
+.quick-link-desc {
+  font-size: 12px;
+  color: #909399;
 }
 
 .search-card {

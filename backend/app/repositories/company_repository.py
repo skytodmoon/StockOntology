@@ -223,9 +223,11 @@ class CompanyRepository(BaseRepository[Company]):
             MATCH path = (c:Company {{stockCode: $stock_code}})-[*1..{depth}]-(related)
             WITH nodes(path) as ns, relationships(path) as rs
             UNWIND ns as n
-            WITH collect(DISTINCT n) as nodes, rs
+            WITH collect(DISTINCT {{data: n, labels: labels(n), id: elementId(n)}}) as nodes, rs
             UNWIND rs as r
-            RETURN nodes, collect(DISTINCT r) as relationships
+            WITH nodes, collect(DISTINCT {{type: type(r), id: elementId(r), 
+                source: elementId(startNode(r)), target: elementId(endNode(r))}}) as relationships
+            RETURN nodes, relationships
         """
         result = self.neo4j.execute_query(query, {"stock_code": stock_code})
 
@@ -234,18 +236,19 @@ class CompanyRepository(BaseRepository[Company]):
 
         nodes = []
         for node in result[0]["nodes"]:
-            node_data = dict(node)
-            node_data["labels"] = list(node.labels)
-            node_data["id"] = node.element_id
+            node_data = dict(node["data"])
+            node_data["labels"] = node["labels"]
+            node_data["id"] = node["id"]
             nodes.append(node_data)
 
         edges = []
         for rel in result[0]["relationships"]:
-            edge_data = dict(rel)
-            edge_data["type"] = rel.type
-            edge_data["id"] = rel.element_id
-            edge_data["source"] = rel.start_node.element_id
-            edge_data["target"] = rel.end_node.element_id
+            edge_data = {
+                "type": rel["type"],
+                "id": rel["id"],
+                "source": rel["source"],
+                "target": rel["target"],
+            }
             edges.append(edge_data)
 
         return {"nodes": nodes, "edges": edges}

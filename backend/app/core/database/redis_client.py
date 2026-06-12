@@ -154,6 +154,10 @@ class RedisClient:
         """检查键是否存在"""
         return self.client.exists(key) > 0
 
+    def keys(self, pattern: str = "*") -> List[str]:
+        """获取匹配模式的键列表"""
+        return self.client.keys(pattern)
+
     def expire(self, key: str, seconds: int) -> bool:
         """设置过期时间"""
         return self.client.expire(key, seconds)

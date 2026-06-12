@@ -2,6 +2,10 @@
 RAG 服务
 
 提供检索增强生成功能。
+增强功能：
+- 注入因果推理链作为上下文
+- 注入本体 schema 告知 LLM 数据语义类型
+- 注入历史分析结果作为参考
 """
 
 from typing import Any, Dict, List, Optional
@@ -18,6 +22,7 @@ class RAGService:
         """初始化 RAG 服务"""
         self._graph_query = None
         self._llm_service = None
+        self._reasoner = None
         self._vector_store = None
 
     @property
@@ -34,6 +39,14 @@ class RAGService:
             from .llm_service import LLMService
             self._llm_service = LLMService()
         return self._llm_service
+
+    @property
+    def reasoner(self):
+        """获取推理引擎"""
+        if self._reasoner is None:
+            from app.core.reasoning import OntologyReasoner
+            self._reasoner = OntologyReasoner()
+        return self._reasoner
 
     def answer_question(self, question: str) -> Dict[str, Any]:
         """
@@ -110,7 +123,12 @@ class RAGService:
         entities: Dict[str, List[str]],
     ) -> Dict[str, Any]:
         """
-        检索上下文
+        检索上下文（增强版）
+
+        除了原有的公司/财务/事件信息，还注入：
+        - 因果推理链
+        - 本体特征
+        - 累积影响分数
 
         Args:
             question: 问题
@@ -124,10 +142,12 @@ class RAGService:
             "industries": [],
             "events": [],
             "financial": [],
+            "causal_chains": [],
+            "ontology_features": {},
         }
 
         # 获取公司信息
-        for code in entities["stock_codes"][:3]:  # 限制数量
+        for code in entities["stock_codes"][:3]:
             company = self.graph_query.get_company_info(code)
             if company:
                 context["companies"].append(company)
@@ -135,6 +155,20 @@ class RAGService:
             # 获取财务数据
             reports = self.graph_query.get_company_financial_reports(code, limit=2)
             context["financial"].extend(reports)
+
+            # 获取因果推理链（增强）
+            try:
+                chains = self.reasoner.get_all_chains_for_stock(code, days=30, limit=3)
+                context["causal_chains"].extend(chains)
+            except Exception as e:
+                logger.warning(f"Failed to get causal chains for {code}: {e}")
+
+            # 获取累积影响分数（增强）
+            try:
+                impact = self.reasoner.get_accumulated_impact(code, days=30)
+                context["ontology_features"][code] = impact
+            except Exception as e:
+                logger.warning(f"Failed to get impact for {code}: {e}")
 
         # 获取相关事件
         for code in entities["stock_codes"][:2]:
@@ -181,7 +215,9 @@ class RAGService:
 
     def _build_context_text(self, context: Dict[str, Any]) -> str:
         """
-        构建上下文文本
+        构建上下文文本（增强版）
+
+        包含因果推理链和本体特征，为 LLM 提供结构化知识。
 
         Args:
             context: 上下文信息
@@ -192,24 +228,47 @@ class RAGService:
         parts = []
 
         # 公司信息
-        if context["companies"]:
-            parts.append("公司信息：")
+        if context.get("companies"):
+            parts.append("【公司信息】（来源：知识图谱）")
             for company in context["companies"]:
-                parts.append(f"- {company.get('stockName', '')}({company.get('stockCode', '')}): "
-                           f"行业={company.get('industry', '')}, 市值={company.get('marketCap', '')}")
+                parts.append(
+                    f"- {company.get('stockName', '')}({company.get('stockCode', '')}): "
+                    f"行业={company.get('industry', '')}, 市值={company.get('marketCap', '')}"
+                )
 
         # 财务数据
-        if context["financial"]:
-            parts.append("\n财务数据：")
+        if context.get("financial"):
+            parts.append("\n【财务数据】（来源：知识图谱 FinancialReport）")
             for report in context["financial"][:3]:
-                parts.append(f"- {report.get('reportDate', '')}: "
-                           f"营收={report.get('revenue', '')}, 净利润={report.get('netProfit', '')}")
+                parts.append(
+                    f"- {report.get('reportDate', '')}: "
+                    f"营收={report.get('revenue', '')}, 净利润={report.get('netProfit', '')}"
+                )
 
         # 事件
-        if context["events"]:
-            parts.append("\n相关事件：")
+        if context.get("events"):
+            parts.append("\n【相关事件】（来源：知识图谱 MarketEvent）")
             for event in context["events"][:3]:
                 parts.append(f"- {event.get('eventDate', '')}: {event.get('title', '')}")
+
+        # 因果推理链（增强）
+        if context.get("causal_chains"):
+            parts.append("\n【因果推理链】（来源：本体推理引擎）")
+            for chain in context["causal_chains"][:3]:
+                if isinstance(chain, dict):
+                    event_name = chain.get("event_name", chain.get("event", {}).get("name", ""))
+                    conclusion = chain.get("conclusion", "")
+                    confidence = chain.get("overall_confidence", 0)
+                    parts.append(f"- 事件 [{event_name}]：{conclusion}（置信度: {confidence:.2f}）")
+
+        # 本体特征（增强）
+        if context.get("ontology_features"):
+            parts.append("\n【本体特征】（来源：知识图谱结构化分析）")
+            for code, impact in context["ontology_features"].items():
+                if isinstance(impact, dict):
+                    score = impact.get("accumulated_score", 0)
+                    count = impact.get("event_count", 0)
+                    parts.append(f"- {code}: 累积影响分数={score}, 近期事件数={count}")
 
         return "\n".join(parts) if parts else "暂无相关信息"
 

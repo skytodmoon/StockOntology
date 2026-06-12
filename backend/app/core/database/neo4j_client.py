@@ -7,9 +7,30 @@ Neo4j 图数据库客户端
 from typing import Any, Dict, List, Optional
 from contextlib import contextmanager
 from neo4j import GraphDatabase, Driver, Session, ManagedTransaction
+from neo4j.time import DateTime, Date, Time
 from loguru import logger
 
 from app.config import settings
+
+
+def _serialize_value(value: Any) -> Any:
+    """
+    序列化 Neo4j 返回的值，处理特殊类型
+    
+    Args:
+        value: 要序列化的值
+        
+    Returns:
+        可序列化的值
+    """
+    if isinstance(value, (DateTime, Date, Time)):
+        return str(value)
+    elif isinstance(value, dict):
+        return {k: _serialize_value(v) for k, v in value.items()}
+    elif isinstance(value, list):
+        return [_serialize_value(item) for item in value]
+    else:
+        return value
 
 
 class Neo4jClient:
@@ -101,7 +122,7 @@ class Neo4jClient:
         """
         with self.get_session(database) as session:
             result = session.run(query, parameters or {})
-            return [record.data() for record in result]
+            return [_serialize_value(record.data()) for record in result]
 
     def execute_write(
         self,
@@ -124,7 +145,7 @@ class Neo4jClient:
             result = session.execute_write(
                 lambda tx: tx.run(query, parameters or {}).data()
             )
-            return result
+            return _serialize_value(result)
 
     def execute_read(
         self,
@@ -147,7 +168,7 @@ class Neo4jClient:
             result = session.execute_read(
                 lambda tx: tx.run(query, parameters or {}).data()
             )
-            return result
+            return _serialize_value(result)
 
     def create_indexes(self):
         """创建数据库索引"""

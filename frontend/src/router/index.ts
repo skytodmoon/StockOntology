@@ -9,6 +9,11 @@ const router = createRouter({
       component: () => import('@/views/Dashboard.vue'),
     },
     {
+      path: '/dragon',
+      name: 'Dragon',
+      component: () => import('@/views/Dragon.vue'),
+    },
+    {
       path: '/graph',
       name: 'Graph',
       component: () => import('@/views/GraphView.vue'),
@@ -27,6 +32,11 @@ const router = createRouter({
       path: '/events',
       name: 'Events',
       component: () => import('@/views/Events.vue'),
+    },
+    {
+      path: '/data',
+      name: 'DataManagement',
+      component: () => import('@/views/DataManagement.vue'),
     },
     {
       path: '/company/:code',
